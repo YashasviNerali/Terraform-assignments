@@ -1,0 +1,172 @@
+Create a new Terraform file called main.tf.
+Create three variables.
+The first variable, called image_name, needs to be set to ghost:latest.
+The second variable is called container_name with a default of ghost_blog.
+The final variable is called ext_port and set the default to port 80.
+
+Create a Docker image resource called ghost_image that uses the image_name variable.
+
+Create a Docker container resource called ghost_container.
+The name will use the container_name variable.
+The image will use the ghost_image resource.
+The internal port will be set to 2368.
+The external port will use ext_port variable.
+
+Initialize Terraform.
+
+Create a Terraform plan that uses the following variables:
+
+container_name = ghost_blog1
+image_name = ghost:alpine
+ext_port = 8080
+Output the plan to a file called tfplan.
+
+Then apply the plan using tfplan and make sure that the apply doesn’t prompt for input.
+
+==========================================================================================================================================================================
+Solution
+
+vi main.tf
+main.tf contents:
+
+#Define variables
+#Define variables
+variable "image_name" {
+  description = "Image for container."
+  default     = "ghost:latest"
+}
+
+variable "container_name" {
+  description = "Name of the container."
+  default     = "ghost_blog"
+}
+
+variable "int_port" {
+  description = "Internal port for container."
+  default     = "2368"
+}
+variable "ext_port" {
+  description = "External port for container."
+  default     = "80"
+}
+
+# latest Ghost Image
+resource "docker_image" "ghost_image" {
+  name = "${var.image_name}"
+}
+
+# Start the Container
+resource "docker_container" "ghost_containe"{
+  name  = "${var.container_name}"
+  image = "${docker_image.ghost_image.latest}"
+  ports {
+    internal = "${var.int_port}"
+    external = "${var.ext_port}"
+}
+}
+
+
+
+terraform validate
+
+terraform plan
+
+
+Change as mentioned spec
+
+
+[ec2-user@ip-172-31-25-91 9z2]$ terraform apply -var 'image_name=ghost:alpine' -var 'container_name=ghost_blog' -var 'ext_port=8080'
+
+An execution plan has been generated and is shown below.
+Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  + docker_container.ghost_containe
+      id:               <computed>
+      attach:           "false"
+      bridge:           <computed>
+      command.#:        <computed>
+      container_logs:   <computed>
+      entrypoint.#:     <computed>
+      env.#:            <computed>
+      exit_code:        <computed>
+      gateway:          <computed>
+      hostname:         <computed>
+      image:            "${docker_image.ghost_image.latest}"
+      ip_address:       <computed>
+      ip_prefix_length: <computed>
+      ipc_mode:         <computed>
+      labels.#:         <computed>
+      log_driver:       "json-file"
+      logs:             "false"
+      must_run:         "true"
+      name:             "ghost_blog"
+      network_data.#:   <computed>
+      ports.#:          "1"
+      ports.0.external: "8080"
+      ports.0.internal: "2368"
+      ports.0.ip:       "0.0.0.0"
+      ports.0.protocol: "tcp"
+      read_only:        "false"
+      restart:          "no"
+      rm:               "false"
+      shm_size:         <computed>
+      start:            "true"
+
+  + docker_image.ghost_image
+      id:               <computed>
+      latest:           <computed>
+      name:             "ghost:alpine"
+
+
+Plan: 2 to add, 0 to change, 0 to destroy.
+
+Do you want to perform these actions?
+  Terraform will perform the actions described above.
+  Only 'yes' will be accepted to approve.
+
+  Enter a value: yes
+
+docker_image.ghost_image: Creating...
+  latest: "" => "<computed>"
+  name:   "" => "ghost:alpine"
+docker_image.ghost_image: Still creating... (10s elapsed)
+docker_image.ghost_image: Creation complete after 18s (ID: sha256:0125f6aa38ddbbc18c79fd78add1f499...00f09805bbf8e04b5ec9c25b6dghost:alpine)
+docker_container.ghost_containe: Creating...
+  attach:           "" => "false"
+  bridge:           "" => "<computed>"
+  command.#:        "" => "<computed>"
+  container_logs:   "" => "<computed>"
+  entrypoint.#:     "" => "<computed>"
+  env.#:            "" => "<computed>"
+  exit_code:        "" => "<computed>"
+  gateway:          "" => "<computed>"
+  hostname:         "" => "<computed>"
+  image:            "" => "sha256:0125f6aa38ddbbc18c79fd78add1f4996dc16700f09805bbf8e04b5ec9c25b6d"
+  ip_address:       "" => "<computed>"
+  ip_prefix_length: "" => "<computed>"
+  ipc_mode:         "" => "<computed>"
+  labels.#:         "" => "<computed>"
+  log_driver:       "" => "json-file"
+  logs:             "" => "false"
+  must_run:         "" => "true"
+  name:             "" => "ghost_blog"
+  network_data.#:   "" => "<computed>"
+  ports.#:          "" => "1"
+  ports.0.external: "" => "8080"
+  ports.0.internal: "" => "2368"
+  ports.0.ip:       "" => "0.0.0.0"
+  ports.0.protocol: "" => "tcp"
+  read_only:        "" => "false"
+  restart:          "" => "no"
+  rm:               "" => "false"
+  shm_size:         "" => "<computed>"
+  start:            "" => "true"
+docker_container.ghost_containe: Creation complete after 1s (ID: b9608557ade6a36366ee18bf9c884f39adeeab71602734d5202a910d9c6b8e58)
+
+Apply complete! Resources: 2 added, 0 changed, 0 destroyed.
+
+
+$terraform destroy -var 'ext_port=8080'
