@@ -1,0 +1,201 @@
+Using Join and Count to Create Multiple S3 Buckets
+
+Find three files as below:-
+
+main.tf :-
+---------
+provider "aws" {
+  region = "${var.aws_region}"
+}
+
+resource "random_id" "tf_bucket_id" {
+  byte_length = 2
+}
+
+resource "aws_s3_bucket" "tf_code" {
+    bucket        = "${var.project_name}-${random_id.tf_bucket_id.dec}"
+    acl           = "private"
+
+    force_destroy =  true
+
+    tags {
+      Name = "tf_bucket"
+    }
+}
+
+
+variables.tf:-
+--------------
+variable "aws_region" {
+  default = "us-east-1"
+}
+
+variable "project_name" {
+  default = "la-terraform"
+}
+
+
+outputs.tf:-
+-------------
+output "bucketname" {
+  value = "${aws_s3_bucket.tf_code.id}"
+}
+
+
+
+Update the Variables File:-
+Edit variables.tf.
+Add a new variable number_of_instances.
+Set the the default to 2.
+
+Update the Main File:-
+Update random_id and add a count.
+Set the value count to use the number_of_instances variable.
+Update aws_s3_bucket and add a count.
+Update random_id.tf_bucket_id.dec so it iterates through the count. Update the Name tag so that tf_bucket is appended with the count index plus one.
+
+Update the Outputs File:-
+Update the bucketname output value to use the join function so that it returns a comma delimited list of bucket names.
+
+Deploy the Infrastructure:-
+Initialize Terraform.
+Validate the files.
+Deploy the S3 buckets.
+======================================================================================================================================================================
+
+vi main.tf 
+
+provider "aws" {
+  region = "${var.aws_region}"
+}
+
+resource "random_id" "tf_bucket_id" {
+  byte_length = 2
+  count = "${var.number_of_instances}"
+}
+
+resource "aws_s3_bucket" "tf_code" {
+    count         = "${var.number_of_instances}"
+    bucket        = "${var.project_name}-${random_id.tf_bucket_id.*.dec[count.index]}"
+    acl           = "private"
+    force_destroy =  true
+
+    tags {
+      Name = "tf_bucket"
+    }
+}
+
+
+vi variables.tf
+
+variable "aws_region" {
+  default = "us-east-2"
+}
+
+variable "project_name" {
+  default = "la-terraform"
+}
+variable "number_of_instances" {
+  default = 2
+}
+
+
+vi outputs.tf
+
+output "bucketname" {
+  value = "${join(", ", aws_s3_bucket.tf_code.*.id)}"
+}
+
+
+To execute above code , you must do terraform install and AWS configure , once aws configure get completed follow the below steps.
+aws configure 
+terraform validate 
+terraform init 
+terraform plan -out=23z.tfplan 
+
+terraform apply 23z.tfplan
+
+To Delete 
+
+terraform destroy -auto-approve
+
+[ec2-user@ip-172-31-25-91 24z2]$ aws s3 ls
+2020-05-14 06:59:13 elasticbeanstalk-us-east-1-370102576278
+2020-06-05 13:02:41 la-terraform-34901
+2020-06-05 13:02:41 la-terraform-60569
+
+
+=============================================================================================================
+
+[ec2-user@ip-172-31-25-91 24z2]$ terraform apply 23z.tfplan
+random_id.tf_bucket_id[0]: Creating...
+  b64:         "" => "<computed>"
+  b64_std:     "" => "<computed>"
+  b64_url:     "" => "<computed>"
+  byte_length: "" => "2"
+  dec:         "" => "<computed>"
+  hex:         "" => "<computed>"
+random_id.tf_bucket_id[1]: Creating...
+  b64:         "" => "<computed>"
+  b64_std:     "" => "<computed>"
+  b64_url:     "" => "<computed>"
+  byte_length: "" => "2"
+  dec:         "" => "<computed>"
+  hex:         "" => "<computed>"
+random_id.tf_bucket_id[0]: Creation complete after 0s (ID: 7Jk)
+random_id.tf_bucket_id[1]: Creation complete after 0s (ID: iFU)
+aws_s3_bucket.tf_code[1]: Creating...
+  acceleration_status:         "" => "<computed>"
+  acl:                         "" => "private"
+  arn:                         "" => "<computed>"
+  bucket:                      "" => "la-terraform-34901"
+  bucket_domain_name:          "" => "<computed>"
+  bucket_regional_domain_name: "" => "<computed>"
+  force_destroy:               "" => "true"
+  hosted_zone_id:              "" => "<computed>"
+  region:                      "" => "<computed>"
+  request_payer:               "" => "<computed>"
+  tags.%:                      "" => "1"
+  tags.Name:                   "" => "tf_bucket"
+  versioning.#:                "" => "<computed>"
+  website_domain:              "" => "<computed>"
+  website_endpoint:            "" => "<computed>"
+aws_s3_bucket.tf_code[0]: Creating...
+  acceleration_status:         "" => "<computed>"
+  acl:                         "" => "private"
+  arn:                         "" => "<computed>"
+  bucket:                      "" => "la-terraform-60569"
+  bucket_domain_name:          "" => "<computed>"
+  bucket_regional_domain_name: "" => "<computed>"
+  force_destroy:               "" => "true"
+  hosted_zone_id:              "" => "<computed>"
+  region:                      "" => "<computed>"
+  request_payer:               "" => "<computed>"
+  tags.%:                      "" => "1"
+  tags.Name:                   "" => "tf_bucket"
+  versioning.#:                "" => "<computed>"
+  website_domain:              "" => "<computed>"
+  website_endpoint:            "" => "<computed>"
+aws_s3_bucket.tf_code[1]: Creation complete after 1s (ID: la-terraform-34901)
+aws_s3_bucket.tf_code[0]: Creation complete after 1s (ID: la-terraform-60569)
+
+Apply complete! Resources: 4 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+bucketname = la-terraform-60569, la-terraform-34901
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+===https://www.google.com/search?q=git+to+jenkins+to+docker+end+to+end+project+buikd&rlz=1C1DFOC_enIN685IN687&oq=git+to+jenkins+to+docker+end+to+end+project+buikd&aqs=chrome..69i57j69i64.25914j0j7&sourceid=chrome&ie=UTF-8

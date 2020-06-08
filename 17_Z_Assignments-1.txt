@@ -47,39 +47,25 @@ variable "mysql_root_password" {
   default     = "P4sSw0rd0!"
 }
 
-variable "ghost_db_username" {
-  description = "Ghost blog database username."
-  default     = "root"
+variable "mysql_network_name" {
+  description = "my nerwork"
+  default     = "mysql_internal_network"
 }
 
-variable "ghost_db_name" {
-  description = "Ghost blog database name."
-  default     = "ghost"
+
+variable "mysql_volume_name" {
+  description = "my volume nsme"
+  default     = "mysql_data"
 }
 
-variable "mysql_network_alias" {
-  description = "The network alias for MySQL."
-  default     = "db"
-}
-
-variable "ghost_network_alias" {
-  description = "The network alias for Ghost"
-  default     = "ghost"
-}
-
-variable "ext_port" {
-  description = "Public port for Ghost"
-  default     = "8080"
+variable "container_name" {
+  description = "my volume nsme"
+  default     = "mysql_container"
 }
 
 ################################################################################################################################################################3
 
 vi image.tf
-image.tf contents:
-
-resource "docker_image" "ghost_image" {
-  name = "ghost:alpine"
-}
 
 resource "docker_image" "mysql_image" {
   name = "mysql:5.7"
@@ -87,15 +73,9 @@ resource "docker_image" "mysql_image" {
 
 ################################################################################################################################################################3
 vi network.tf
-network.tf contents:
-
-resource "docker_network" "public_bridge_network" {
-  name   = "public_ghost_network"
-  driver = "bridge"
-}
 
 resource "docker_network" "private_bridge_network" {
-  name     = "ghost_mysql_internal"
+  name     = "${var.mysql_network_name}"
   driver   = "bridge"
   internal = true
 }
@@ -106,18 +86,20 @@ cd ../volumes/
 Create volumes.tf:
 
 vi volumes.tf
-volumes.tf contents:
+
 
 resource "docker_volume" "mysql_data_volume" {
-  name = "mysql_data"
+  name = "${var.mysql_volume_name}"
 }
 
 ################################################################################################################################################################3
 vi main.tf
 main.tf contents:
+provider "docker" {
+}
 
 resource "docker_container" "mysql_container" {
-  name  = "ghost_database"
+  name  = "${var.container_name}"
   image = "${docker_image.mysql_image.name}"
   env   = [
     "MYSQL_ROOT_PASSWORD=${var.mysql_root_password}"

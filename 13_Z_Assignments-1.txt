@@ -40,7 +40,7 @@ Deploy the infrastructure using the plan file.
 solution
 mkdir modules
 mkdir ghost
-cd terraform/modules/ghost
+cd ~/Terraform/modules/ghost
 
 touch {main.tf,variables.tf,outputs.tf}
 
@@ -93,8 +93,8 @@ output "container_name" {
 ######################################################################################################################################################################################3
 Create root module
 mkdir modules
-mkdir root
-cd terraform/modules/root
+
+cd terraform/modules/
 
 touch {main.tf,variables.tf,outputs.tf}
 
@@ -103,31 +103,24 @@ touch {main.tf,variables.tf,outputs.tf}
 Edit main.tf:
 
 vi main.tf
-main.tf contents:
 
 # Download the image
-module "image" {
-  source = "./image"
+module "ghost" {
+  source = "./ghost"
   image_name  = "${var.image_name}"
+  container_name = "${var.container_name}"
+  ext_port = "${var.ext_port}"
 }
 
-# Start the container
-module "container" {
-  source             = "./container"
-  image              = "${module.image.image_out}"
-  container_name     = "${var.container_name}"
-  int_port           = "${var.int_port}"
-  ext_port           = "${var.ext_port}"
-}
+
 Edit variables.tf:
 
 vi variables.tf
-variables.tf contents:
 
 #Define variables
 variable "container_name" {
   description = "Name of the container."
-  default     = "blog"
+  default     = "myblog"
 }
 variable "image_name" {
   description = "Image for container."
@@ -141,24 +134,69 @@ variable "ext_port" {
   description = "External port for container."
   default     = "80"
 }
-Edit outputs.tf:
+
 
 vi outputs.tf
-outputs.tf contents:
-
-#Output the IP Address of the Container
-output "ip" {
-  value = "${module.container.ip}"
+output "ip_address" {
+  value       = "${module.ghost.ip_address}"
+  description = "The IP for the container."
 }
 
 output "container_name" {
-  value = "${module.container.container_name}"
+  value       = "${module.ghost.container_name}"
+  description = "The name of the container."
 }
-Initialize Terraform:
-
 terraform init
 Create the image plan:
 
-terraform plan -out=tfplan
-Deploy the container us
+terraform plan -out=ghost1.tfplan
+
+terraform apply ghost1.tfplan
+
+###################################################################################################################################################################
+
+[ec2-user@ip-172-31-25-91 modules]$ terraform apply ghost1.tfplan
+module.ghost.docker_container.ghost_container: Creating...
+  attach:           "" => "false"
+  bridge:           "" => "<computed>"
+  command.#:        "" => "<computed>"
+  container_logs:   "" => "<computed>"
+  entrypoint.#:     "" => "<computed>"
+  env.#:            "" => "<computed>"
+  exit_code:        "" => "<computed>"
+  gateway:          "" => "<computed>"
+  hostname:         "" => "<computed>"
+  image:            "" => "sha256:52972da38a93b1f507be32c4bb2291b204c2995cb55e939015d84d406cb40b00"
+  ip_address:       "" => "<computed>"
+  ip_prefix_length: "" => "<computed>"
+  ipc_mode:         "" => "<computed>"
+  labels.#:         "" => "<computed>"
+  log_driver:       "" => "<computed>"
+  log_opts.%:       "" => "<computed>"
+  logs:             "" => "false"
+  must_run:         "" => "true"
+  name:             "" => "myblog"
+  network_data.#:   "" => "<computed>"
+  ports.#:          "" => "1"
+  ports.0.external: "" => "80"
+  ports.0.internal: "" => "2368"
+  ports.0.ip:       "" => "0.0.0.0"
+  ports.0.protocol: "" => "tcp"
+  read_only:        "" => "false"
+  restart:          "" => "no"
+  rm:               "" => "false"
+  shm_size:         "" => "<computed>"
+  start:            "" => "true"
+  user:             "" => "<computed>"
+module.ghost.docker_container.ghost_container: Creation complete after 0s (ID: 61526b6208323194bcb9460b676de341706c3924d90bcfe8e48f5a2df0b2fd9a)
+
+Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+container_name = myblog
+ip_address = 172.17.0.2
+[ec2-user@ip-172-31-25-91 modules]$ docker container ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS                          PORTS                  NAMES
+61526b620832        52972da38a93        "docker-entrypoint.s…"   29 seconds ago      Up 28 seconds                   0.0.0.0:80->2368/tcp   myblog
 

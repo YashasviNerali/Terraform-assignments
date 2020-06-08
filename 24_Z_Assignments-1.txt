@@ -1,0 +1,129 @@
+Using Terraform to Create a RandomID and S3 Buckets
+
+Create the Main file:-
+Create the main.tf Terraform file.
+Add a provider, aws.
+Set the region to use a variable called aws_region.
+Add a random_id resource and name it tf_bucket_id.
+Set the byte_length to 2.
+
+Add a resource, aws_s3_bucket, and name it tf_code.
+The bucket name will be set using a variable called project_name, followed by a -, and will use the dec attribute from tf_bucket_id.
+Set the acl to private.
+Set force_destroy to true.
+Create a tag with a name to tf_bucket.
+
+Create the Variables File:-
+Create the variables.tf Terraform file.
+Add a variable called aws_region.
+Set the default to us-east-1. Add a variable called project_name.
+Set the default to la-terraform.
+
+Create the outputs file:-
+Create the outputs.tf Terraform file.
+Add a output called bucketname.
+The value should be set to id, coming from tf_code.
+
+Deploy the infrastructure:-
+Initialize Terraform.
+Validate the files.
+Deploy the S3 bucket.
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ vi variables.tf
+variable "tag_name" {
+   default = "YashDevopsS3"
+}
+
+variable "aws_region" {
+  default = "us-east-2"
+}
+
+variable "project_name" {
+  default = "la-terraform"
+}
+
+
+vi main.tf
+
+provider "aws" {
+
+  region = "${var.aws_region}"
+
+}
+
+resource "random_id" "tf_bucket_id" {
+  byte_length = 2
+}
+
+resource "aws_s3_bucket" "tf_code" {
+  bucket = "${var.project_name}-${random_id.tf_bucket_id.dec}"
+  acl = "private"
+  force_destroy = true
+  tags = {
+    name        = "${var.tag_name}-${random_id.tf_bucket_id.dec}"
+  }
+}
+
+ vi outputs.tf
+output "bucket_name" {
+
+        value = "${aws_s3_bucket.tf_code.bucket}"
+}
+
+
+
+
+
+ aws configure
+terraform validate
+terraform init
+terraform plan -out=23z1.tfplan
+terraform apply 23z1.tfplan
+
+=======================================================================================================================================================================
+
+[ec2-user@ip-172-31-25-91 23z1]$ terraform apply 23z1.tfplan
+random_id.tf_bucket_id: Creating...
+  b64:         "" => "<computed>"
+  b64_std:     "" => "<computed>"
+  b64_url:     "" => "<computed>"
+  byte_length: "" => "2"
+  dec:         "" => "<computed>"
+  hex:         "" => "<computed>"
+random_id.tf_bucket_id: Creation complete after 0s (ID: sEA)
+aws_s3_bucket.tf_code: Creating...
+  acceleration_status:         "" => "<computed>"
+  acl:                         "" => "private"
+  arn:                         "" => "<computed>"
+  bucket:                      "" => "la-terraform-45120"
+  bucket_domain_name:          "" => "<computed>"
+  bucket_regional_domain_name: "" => "<computed>"
+  force_destroy:               "" => "true"
+  hosted_zone_id:              "" => "<computed>"
+  region:                      "" => "<computed>"
+  request_payer:               "" => "<computed>"
+  tags.%:                      "" => "1"
+  tags.name:                   "" => "YashDevopsS3-45120"
+  versioning.#:                "" => "<computed>"
+  website_domain:              "" => "<computed>"
+  website_endpoint:            "" => "<computed>"
+aws_s3_bucket.tf_code: Creation complete after 1s (ID: la-terraform-45120)
+
+Apply complete! Resources: 2 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+bucket_name = la-terraform-45120
+[ec2-user@ip-172-31-25-91 23z1]$ aws s3 ls
+2020-05-14 06:59:13 elasticbeanstalk-us-east-1-370102576278
+2020-06-05 13:22:38 la-terraform-45120
+[ec2-user@ip-172-31-25-91 23z1]$ terraform destroy -auto-approve
+random_id.tf_bucket_id: Refreshing state... (ID: sEA)
+aws_s3_bucket.tf_code: Refreshing state... (ID: la-terraform-45120)
+aws_s3_bucket.tf_code: Destroying... (ID: la-terraform-45120)
+aws_s3_bucket.tf_code: Destruction complete after 0s
+random_id.tf_bucket_id: Destroying... (ID: sEA)
+random_id.tf_bucket_id: Destruction complete after 0s
+
+Destroy complete! Resources: 2 destroyed.
