@@ -71,7 +71,9 @@ variable "container_name" {
   description = "Name of the container."
   default     = "ghost_blog"
 }
-
+variable "int_port" {
+  description = "Internal port for container."
+  default     = "2368"
 
 variable "ext_port" {
   description = "External port for container."
@@ -198,5 +200,5 @@ container_name = myblog
 ip_address = 172.17.0.2
 [ec2-user@ip-172-31-25-91 modules]$ docker container ps
 CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS                          PORTS                  NAMES
-61526b620832        52972da38a93        "docker-entrypoint.s…"   29 seconds ago      Up 28 seconds                   0.0.0.0:80->2368/tcp   myblog
+61526b620832        52972da38a93        "docker-entrypoint.sâ€¦"   29 seconds ago      Up 28 seconds                   0.0.0.0:80->2368/tcp   myblog
 
